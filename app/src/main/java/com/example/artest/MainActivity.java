@@ -1,10 +1,14 @@
 package com.example.artest;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
@@ -38,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     DownloadARModelFileTask downloadARModelFileTask;
     File file;
+    private Context mContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,32 +51,47 @@ public class MainActivity extends AppCompatActivity {
 
         askForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, 101);
         button = findViewById(R.id.button);
-        downloadButton = findViewById(R.id.download_model);
-        progressBar = findViewById(R.id.progressBar);
-        percentage = findViewById(R.id.percentage);
 
+//        button.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                startActivity(new Intent(MainActivity.this, com.example.artest.ViroActivity.class));
+//            }
+//        });
         button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, com.example.artest.ViroActivity.class));
-            }
-        });
-        downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 //downloadModelFile();
                 file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "UPES_MAP.gltf");
                 if(file.exists())
-                    Toast.makeText(getApplicationContext(), "File Already Exists", Toast.LENGTH_LONG).show();
-                else
-                    downloadModelFile();
+                    startActivity(new Intent(MainActivity.this, com.example.artest.ViroActivity.class));
+//                    Toast.makeText(getApplicationContext(), "File Already Exists", Toast.LENGTH_LONG).show();
+                else {
+                    //downloadModelFile();
+                    final AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+                    alertDialog.setMessage("Download 200mb file to continue");
+                    alertDialog.setCancelable(false);
 
+                    alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            downloadModelFile();
+                        }
+                    });
+                    alertDialog.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.cancel();
+                        }
+                    });
+                    alertDialog.show();
+                }
             }
         });
     }
     private void downloadModelFile() {
 
-        RetrofitInterface downloadService = createService(RetrofitInterface.class, "https://upesacm.org/ACM_App/AR Model/");
+        RetrofitInterface downloadService = createService(RetrofitInterface.class, "https://upesacm.org/upesacmacmwapp/ARModel/");
         Call<ResponseBody> call = downloadService.downloadFileByUrl("UPES_MAP.gltf");
 
         call.enqueue(new Callback<ResponseBody>() {
@@ -105,12 +125,15 @@ public class MainActivity extends AppCompatActivity {
                 .build();
         return retrofit.create(serviceClass);
     }
-    private class DownloadARModelFileTask extends AsyncTask<ResponseBody, Pair<Integer, Long>, String> {
+    private class DownloadARModelFileTask extends AsyncTask<ResponseBody, Long , String> {
 
+        ProgressBar progressBar2 = (ProgressBar) findViewById(R.id.progressBar2);
+        progressDialog mProgressDialog = new progressDialog();
+        int prog;
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-
+            mProgressDialog.show(getSupportFragmentManager(),"Downloading");
         }
 
         @Override
@@ -120,31 +143,70 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
 
-        protected void onProgressUpdate(Pair<Integer, Long>... progress) {
+        @Override
+        protected void onProgressUpdate(Long... values) {
+            Log.d(TAG, "onProgressUpdate: "+(int)((double)(values[0]/(double)185641883*100)));
 
-            Log.d("API123", progress[0].second + " ");
+            prog = (int)((double)(values[0]/(double)185641883*100));
 
-            if (progress[0].first == 100)
-                Toast.makeText(getApplicationContext(), "File downloaded successfully", Toast.LENGTH_SHORT).show();
-
-
-            if (progress[0].second > 0) {
-                int currentProgress = (int) ((double) progress[0].first / (double) progress[0].second * 100);
-                progressBar.setProgress(currentProgress);
-                percentage.setText("Progress " + currentProgress + "%");
-
+            if(prog == 100){
+                mProgressDialog.dismiss();
+                final AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+                alert.setMessage("Do you wish to continue ?");
+                alert.setCancelable(false);
+                alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        startActivity(new Intent(MainActivity.this, com.example.artest.ViroActivity.class));
+                    }
+                });
+                alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
             }
 
-            if (progress[0].first == -1) {
+            if(prog>0){
+                Log.d(TAG, "onProgressUpdate: greater" );
+                //Progress Update
+            }
+
+            if(prog == -1){
                 Toast.makeText(getApplicationContext(), "Download failed", Toast.LENGTH_SHORT).show();
                 boolean delete = file.delete();
                 if (delete)
                     Toast.makeText(getApplicationContext(), "File also deleted", Toast.LENGTH_SHORT).show();
             }
-
         }
 
-        public void doProgress(Pair<Integer, Long> progressDetails) {
+//        protected void onProgressUpdate(Pair<Integer, Long>... progress) {
+//
+//            Log.d("API123", progress[0].second + " ");
+//
+//            if (progress[0].first == 100)
+//                Toast.makeText(getApplicationContext(), "File downloaded successfully", Toast.LENGTH_SHORT).show();
+//
+//
+//            if (progress[0].second > 0 ) {
+//                Log.d(TAG, "onProgressUpdate: inn");
+//                int currentProgress = (int) ((double) progress[0].first / (double) progress[0].second * 100);
+////                progressBar.setProgress(currentProgress);
+////                percentage.setText("Progress " + currentProgress + "%");
+//
+//            }
+//
+//            if (progress[0].first == -1) {
+//                Toast.makeText(getApplicationContext(), "Download failed", Toast.LENGTH_SHORT).show();
+//                boolean delete = file.delete();
+//                if (delete)
+//                    Toast.makeText(getApplicationContext(), "File also deleted", Toast.LENGTH_SHORT).show();
+//            }
+//
+//        }
+
+        public void doProgress(Long progressDetails) {
             publishProgress(progressDetails);
         }
 
@@ -167,14 +229,14 @@ public class MainActivity extends AppCompatActivity {
                 outputStream = new FileOutputStream(destinationFile);
                 byte data[] = new byte[4096];
                 int count;
-                int progress = 0;
+                long progress = 0;
                 long fileSize = body.contentLength();
                 Log.d(TAG, "File Size=" + fileSize);
                 while ((count = inputStream.read(data)) != -1) {
                     outputStream.write(data, 0, count);
                     progress += count;
-                    Pair<Integer, Long> pairs = new Pair<>(progress, fileSize);
-                    downloadARModelFileTask.doProgress(pairs);
+                    //Pair<Integer, Long> pairs = new Pair<>(progress, fileSize);
+                    downloadARModelFileTask.doProgress(progress);
                     Log.d(TAG, "Progress: " + progress + "/" + fileSize + " >>>> " + (float) progress / fileSize);
                 }
 
@@ -182,12 +244,12 @@ public class MainActivity extends AppCompatActivity {
 
                 Log.d(TAG, destinationFile.getParent());
                 Pair<Integer, Long> pairs = new Pair<>(100, 100L);
-                downloadARModelFileTask.doProgress(pairs);
+                downloadARModelFileTask.doProgress(progress);
                 return;
             } catch (IOException e) {
                 e.printStackTrace();
                 Pair<Integer, Long> pairs = new Pair<>(-1, Long.valueOf(-1));
-                downloadARModelFileTask.doProgress(pairs);
+                downloadARModelFileTask.doProgress((long)-1);
                 Log.d(TAG, "Failed to save the file!");
                 return;
             } finally {
