@@ -42,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     DownloadARModelFileTask downloadARModelFileTask;
     File file;
-    private Context mContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
