@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
 
             if(prog == 100){
                 mProgressDialog.dismiss();
-                final AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+                AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
                 alert.setMessage("Do you wish to continue ?");
                 alert.setCancelable(false);
                 alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
@@ -166,7 +166,9 @@ public class MainActivity extends AppCompatActivity {
                         dialogInterface.cancel();
                     }
                 });
+            alert.show();
             }
+
 
             if(prog>0){
                 Log.d(TAG, "onProgressUpdate: greater" );
