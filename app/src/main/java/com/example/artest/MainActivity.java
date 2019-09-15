@@ -157,7 +157,6 @@ public class MainActivity extends AppCompatActivity {
         try {
 
             File destinationFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), filename);
-            //File destinationFile = new File("file:///android_asset/", filename);
             InputStream inputStream = null;
             OutputStream outputStream = null;
 
@@ -168,7 +167,8 @@ public class MainActivity extends AppCompatActivity {
                 byte data[] = new byte[4096];
                 int count;
                 int progress = 0;
-                long fileSize = body.contentLength();
+                //long fileSize = body.contentLength();
+                long fileSize = 185641883;
                 Log.d(TAG, "File Size=" + fileSize);
                 while ((count = inputStream.read(data)) != -1) {
                     outputStream.write(data, 0, count);
