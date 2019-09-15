@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -162,16 +163,15 @@ public class MainActivity extends AppCompatActivity {
                 alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.cancel();
+                        dialogInterface.dismiss();
                     }
                 });
             alert.show();
             }
 
-
             if(prog>0){
                 Log.d(TAG, "onProgressUpdate: greater" );
-                //Progress Update
+                mProgressDialog.updateprogress(prog);
             }
 
             if(prog == -1){
